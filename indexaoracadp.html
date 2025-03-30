@@ -1,0 +1,1407 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Juego del Ahorcado - Ortografía</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Iconos de Bootstrap -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        .dark-mode {
+            --primary-color: #daacff;
+            --secondary-color: #b28dff;
+            --accent-color: #ffcf7c;
+            --text-color: #292f36;
+            --background-color: #f7fff7;
+            --correct-color: #06d6a0;
+            --incorrect-color: #ef476f;
+        }
+
+        :root {
+            --primary-color: #daacff;
+            --secondary-color: #9d7aff;
+            --accent-color: #d4b36b;
+            /* Tono amarillo menos brillante para modo oscuro */
+            --text-color: #f8f9fa;
+            --background-color: #212529;
+            --correct-color: #2ec4b6;
+            --incorrect-color: #e71d36;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            transition: all 0.3s ease;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container-fluid {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 0 15px;
+        }
+
+        .title {
+            color: var(--primary-color);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1rem;
+        }
+
+        .header-stats {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .stat-item {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .points {
+            background-color: var(--accent-color);
+            color: var(--text-color);
+        }
+
+        .lives {
+            color: var(--incorrect-color);
+        }
+
+        .lives i {
+            color: var(--incorrect-color);
+            font-size: 1.2rem;
+        }
+
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        .hangman-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+            max-width: 300px;
+            margin: 0 auto;
+        }
+
+        .hangman-drawing {
+            position: absolute;
+            stroke: var(--primary-color);
+            stroke-width: 4;
+            fill: none;
+            transition: all 0.5s ease;
+        }
+
+        .hangman-face {
+            fill: var(--primary-color);
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .hangman-mouth {
+            fill: none;
+            stroke: var(--text-color);
+            stroke-width: 2;
+            opacity: 0;
+            transition: all 0.5s ease;
+        }
+
+        .hangman-mouth.sad {
+            d: path("M190,110 Q200,100 210,110");
+        }
+
+        .question-display {
+            background-color: rgba(218, 172, 255, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 18px;
+            line-height: 1.6;
+            text-align: center;
+        }
+
+        .word-display {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            margin: 20px 0;
+        }
+
+        .letter-box {
+            width: 40px;
+            height: 50px;
+            border-bottom: 3px solid var(--secondary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .letter-box.revealed {
+            animation: popIn 0.3s ease;
+        }
+
+        .letter-box.space {
+            border-bottom: none;
+            width: 20px;
+        }
+
+        @keyframes popIn {
+            0% {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-5px) rotate(-5deg);
+            }
+
+            75% {
+                transform: translateX(5px) rotate(5deg);
+            }
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.3;
+            }
+        }
+
+        .keyboard {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: auto;
+            padding: 20px 0;
+        }
+
+        .keyboard-row {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .key {
+            min-width: 40px;
+            height: 40px;
+            border-radius: 5px;
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            padding: 0 8px;
+        }
+
+        .key:hover {
+            transform: scale(1.05);
+            background-color: var(--accent-color);
+        }
+
+        .key.correct {
+            background-color: var(--correct-color);
+            color: white;
+            animation: popIn 0.3s ease;
+        }
+
+        .key.incorrect {
+            background-color: var(--incorrect-color);
+            color: white;
+            animation: shake 0.5s ease;
+        }
+
+        .key:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .key.special {
+            background-color: var(--accent-color);
+            font-size: 14px;
+        }
+
+        .key.toggle {
+            width: auto;
+            padding: 0 10px;
+        }
+
+        .game-status {
+            text-align: center;
+            margin: 15px 0;
+        }
+
+        .win-message {
+            color: var(--correct-color);
+            font-weight: bold;
+            font-size: 24px;
+            animation: popIn 0.5s ease;
+        }
+
+        .lose-message {
+            color: var(--incorrect-color);
+            font-weight: bold;
+            font-size: 24px;
+            animation: shake 0.5s ease;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background-color: var(--accent-color);
+            color: var(--text-color);
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1.5rem;
+        }
+
+        .theme-toggle:hover {
+            transform: rotate(30deg);
+        }
+
+        .feedback {
+            font-style: italic;
+            margin: 15px auto;
+            padding: 15px;
+            border-left: 3px solid var(--primary-color);
+            background-color: rgba(218, 172, 255, 0.1);
+            border-radius: 0 5px 5px 0;
+            text-align: left;
+            max-width: 600px;
+        }
+
+        .hint-container {
+            margin: 15px auto;
+            padding: 15px;
+            border-left: 3px solid var(--accent-color);
+            background-color: rgba(255, 207, 124, 0.1);
+            border-radius: 0 5px 5px 0;
+            text-align: left;
+            max-width: 600px;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            display: none;
+        }
+
+        .hint-container.visible {
+            opacity: 1;
+            display: block;
+        }
+
+        .hint-button {
+            background-color: var(--primary-color);
+            color: var(--text-color);
+            border: none;
+            border-radius: 20px;
+            padding: 5px 15px;
+            margin-top: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .hint-button:hover {
+            background-color: var(--secondary-color);
+            transform: scale(1.05);
+        }
+
+        .option-list {
+            margin-top: 10px;
+        }
+
+        .option-item {
+            padding: 8px 0;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-bottom: 1px dashed rgba(218, 172, 255, 0.3);
+        }
+
+        .option-item:hover {
+            color: var(--primary-color);
+            transform: translateX(5px);
+        }
+
+        .option-item:last-child {
+            border-bottom: none;
+        }
+
+        .game-summary {
+            background-color: rgba(218, 172, 255, 0.2);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px auto;
+            max-width: 600px;
+            text-align: center;
+            display: none;
+        }
+
+        .summary-title {
+            color: var(--primary-color);
+            font-size: 24px;
+            margin-bottom: 15px;
+        }
+
+        .summary-stat {
+            font-size: 18px;
+            margin: 10px 0;
+        }
+
+        .summary-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .summary-button {
+            padding: 8px 20px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+
+        .play-again {
+            background-color: var(--correct-color);
+            color: white;
+        }
+
+        .exit-game {
+            background-color: var(--incorrect-color);
+            color: white;
+        }
+
+        @media (min-width: 992px) {
+            .game-container {
+                flex-direction: row;
+                align-items: stretch;
+                gap: 30px;
+            }
+
+            .game-left {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+            }
+
+            .game-right {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .keyboard {
+                margin-top: auto;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .title {
+                margin-top: 3.5rem;
+            }
+
+            .key {
+                min-width: 30px;
+                height: 35px;
+                font-size: 14px;
+                padding: 0 5px;
+            }
+
+            .letter-box {
+                width: 30px;
+                height: 40px;
+                font-size: 20px;
+            }
+
+            .question-display {
+                font-size: 16px;
+                padding: 10px;
+            }
+
+            .hangman-container {
+                height: 250px;
+            }
+
+            .header-stats {
+                top: 10px;
+                left: 10px;
+                flex-direction: column;
+                gap: 5px;
+            }
+        }
+
+        .mute-toggle {
+            position: fixed;
+            top: 20px;
+            right: 80px;
+            /* Posicionarlo a la derecha del botón de tema */
+            z-index: 1000;
+            background-color: var(--accent-color);
+            color: var(--text-color);
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1.5rem;
+        }
+
+        .mute-toggle:hover {
+            transform: scale(1.1);
+        }
+
+        @media (max-width: 576px) {
+            .mute-toggle {
+                top: 10px;
+                right: 70px;
+                width: 40px;
+                height: 40px;
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <audio id="backgroundMusic" loop autoplay>
+        <source src="./Sombras en el Abismo.mp3" type="audio/mp3">
+        Tu navegador no soporta el elemento de audio.
+    </audio>
+    <div class="header-stats">
+        <div class="stat-item points">
+            <i class="bi bi-stars"></i>
+            Puntos: <span id="points">0</span>
+        </div>
+        <div class="stat-item lives" id="livesContainer"></div>
+    </div>
+
+    <button id="themeToggle" class="theme-toggle">
+        <i class="bi bi-sun-fill"></i>
+    </button>
+
+    <button id="muteToggle" class="mute-toggle">
+        <i class="bi bi-volume-up-fill"></i>
+    </button>
+
+    <div class="container-fluid py-4">
+
+        <h1 class="text-center title">Ahorcado - Ortografico</h1>
+
+        <div class="game-container" id="gameContainer">
+            <div class="game-left">
+                <div class="hangman-container">
+                    <svg width="100%" height="100%" viewBox="0 0 300 300">
+                        <!-- Base -->
+                        <line x1="50" y1="280" x2="250" y2="280" class="hangman-drawing" />
+                        <!-- Poste vertical -->
+                        <line x1="100" y1="280" x2="100" y2="50" class="hangman-drawing" />
+                        <!-- Viga horizontal -->
+                        <line x1="100" y1="50" x2="200" y2="50" class="hangman-drawing" />
+                        <!-- Cuerda -->
+                        <line x1="200" y1="50" x2="200" y2="80" class="hangman-drawing" />
+
+                        <!-- Cabeza (parte 1) -->
+                        <circle id="head" cx="200" cy="100" r="20" class="hangman-drawing" style="display: none;" />
+
+                        <!-- Ojos -->
+                        <circle id="leftEye" cx="193" cy="95" r="3" class="hangman-face" style="display: none;" />
+                        <circle id="rightEye" cx="207" cy="95" r="3" class="hangman-face" style="display: none;" />
+
+                        <!-- Boca -->
+                        <path id="mouth" d="M190,105 Q200,115 210,105" class="hangman-mouth" style="display: none;" />
+
+                        <!-- Cuerpo (parte 2) -->
+                        <line id="body" x1="200" y1="120" x2="200" y2="190" class="hangman-drawing"
+                            style="display: none;" />
+
+                        <!-- Brazo izquierdo (parte 3) -->
+                        <line id="leftArm" x1="200" y1="140" x2="170" y2="120" class="hangman-drawing"
+                            style="display: none;" />
+
+                        <!-- Brazo derecho (parte 4) -->
+                        <line id="rightArm" x1="200" y1="140" x2="230" y2="120" class="hangman-drawing"
+                            style="display: none;" />
+
+                        <!-- Pierna izquierda (parte 5) -->
+                        <line id="leftLeg" x1="200" y1="190" x2="170" y2="230" class="hangman-drawing"
+                            style="display: none;" />
+
+                        <!-- Pierna derecha (parte 6) -->
+                        <line id="rightLeg" x1="200" y1="190" x2="230" y2="230" class="hangman-drawing"
+                            style="display: none;" />
+                    </svg>
+                </div>
+
+                <button id="hintBtn" class="hint-button mt-2" style="display: none;">
+                    <i class="bi bi-lightbulb"></i> Ver Pista
+                </button>
+            </div>
+
+            <div class="game-right">
+                <div id="questionDisplay" class="question-display"></div>
+
+                <div id="gameMessage" class="game-status"></div>
+
+                <div id="wordDisplay" class="word-display"></div>
+
+                <div id="hintContainer" class="hint-container">
+                    <strong><i class="bi bi-lightbulb-fill me-2"></i>Pistas:</strong>
+                    <!-- <p>Posibles respuestas: </p> -->
+                    <div id="optionList" class="option-list m-0 p-0"></div>
+                </div>
+
+                <div id="feedbackContainer" class="feedback" style="display: none;"></div>
+
+                <div id="keyboard" class="keyboard">
+                    <div class="keyboard-row">
+                        <button class="key" data-key="Q">Q</button>
+                        <button class="key" data-key="W">W</button>
+                        <button class="key" data-key="E">E</button>
+                        <button class="key" data-key="R">R</button>
+                        <button class="key" data-key="T">T</button>
+                        <button class="key" data-key="Y">Y</button>
+                        <button class="key" data-key="U">U</button>
+                        <button class="key" data-key="I">I</button>
+                        <button class="key" data-key="O">O</button>
+                        <button class="key" data-key="P">P</button>
+                    </div>
+                    <div class="keyboard-row">
+                        <button class="key" data-key="A">A</button>
+                        <button class="key" data-key="S">S</button>
+                        <button class="key" data-key="D">D</button>
+                        <button class="key" data-key="F">F</button>
+                        <button class="key" data-key="G">G</button>
+                        <button class="key" data-key="H">H</button>
+                        <button class="key" data-key="J">J</button>
+                        <button class="key" data-key="K">K</button>
+                        <button class="key" data-key="L">L</button>
+                        <button class="key" data-key="Ñ">Ñ</button>
+                    </div>
+                    <div class="keyboard-row">
+                        <button class="key" data-key="Z">Z</button>
+                        <button class="key" data-key="X">X</button>
+                        <button class="key" data-key="C">C</button>
+                        <button class="key" data-key="V">V</button>
+                        <button class="key" data-key="B">B</button>
+                        <button class="key" data-key="N">N</button>
+                        <button class="key" data-key="M">M</button>
+                    </div>
+                    <div class="keyboard-row" id="accentRow">
+                        <button class="key special" data-key="Á">Á</button>
+                        <button class="key special" data-key="É">É</button>
+                        <button class="key special" data-key="Í">Í</button>
+                        <button class="key special" data-key="Ó">Ó</button>
+                        <button class="key special" data-key="Ú">Ú</button>
+                        <button class="key special" data-key="Ü">Ü</button>
+                        <button class="key toggle" id="toggleCase">
+                            <i class="bi bi-arrow-down-up"></i> Aa
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="gameSummary" class="game-summary">
+            <h2 class="summary-title">Resumen del Juego</h2>
+            <div class="summary-stat">Preguntas respondidas correctamente: <span id="correctAnswers">0</span> de <span
+                    id="totalQuestions">0</span></div>
+            <div class="summary-stat">Puntos totales: <span id="totalPoints">0</span></div>
+            <div class="summary-buttons">
+                <button id="playAgainBtn" class="summary-button play-again">Jugar de nuevo</button>
+                <button id="exitGameBtn" class="summary-button exit-game">Salir</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        Swal.fire({
+            title: "Este juego tiene audio.",
+            text: "Puedes pausar la música cuando quieras.",
+            icon: "question"
+          });
+        // Lista de preguntas para el juego con respuestas y retroalimentación
+        const PREGUNTAS = [
+            {
+                pregunta: "La niña ____ a la escuela todos los días.",
+                respuesta: "va",
+                distractores: ["Va", "Vas", "Voy"],
+                retroalimentacion: "La forma correcta es \"va\", ya que es la conjugación en tercera persona singular del verbo \"ir\" en presente."
+            },
+            {
+                pregunta: "Ayer, Juan ____ al cine con sus amigos.",
+                respuesta: "fue",
+                distractores: ["Va", "Fuimos", "Iba"],
+                retroalimentacion: "La forma correcta es \"fue\", que corresponde al pretérito perfecto simple del verbo \"ir\" en tercera persona singular."
+            },
+            {
+                pregunta: "El perro ____ en el jardín mientras su dueño lo observaba.",
+                respuesta: "jugaba",
+                distractores: ["Juega", "Jugaría", "Juegan"],
+                retroalimentacion: "La forma correcta es \"jugaba\", ya que está en pretérito imperfecto del verbo \"jugar\", en tercera persona singular."
+            },
+            {
+                pregunta: "La comida de la abuela ____ muy deliciosa.",
+                respuesta: "estaba",
+                distractores: ["Esta", "Está", "Estará"],
+                retroalimentacion: "La forma correcta es \"estaba\", que se refiere al estado de la comida en el pasado."
+            },
+            {
+                pregunta: "Yo ____ que estudiar para el examen de mañana.",
+                respuesta: "tengo",
+                distractores: ["Tienes", "Tiene", "Tenemos"],
+                retroalimentacion: "La forma correcta es \"tengo\", que es la conjugación en primera persona singular del verbo \"tener\" en presente."
+            },
+            {
+                pregunta: "Nosotros ____ al parque todos los domingos.",
+                respuesta: "vamos",
+                distractores: ["Van", "Voy", "Vas"],
+                retroalimentacion: "La forma correcta es \"vamos\", que es la conjugación en primera persona plural del verbo \"ir\" en presente."
+            },
+            {
+                pregunta: "Ellos no ____ lo que les estaba diciendo.",
+                respuesta: "entendían",
+                distractores: ["Entienden", "Entendieron", "Entenderán"],
+                retroalimentacion: "La forma correcta es \"entendían\", que es la conjugación en tercera persona plural del verbo \"entender\" en pretérito imperfecto."
+            },
+            {
+                pregunta: "¿____ tú a la fiesta de anoche?",
+                respuesta: "Fuiste",
+                distractores: ["Fuistes", "Fuisteis", "Ibas"],
+                retroalimentacion: "La forma correcta es \"Fuiste\", que es la conjugación en segunda persona singular del verbo \"ir\" en pretérito perfecto simple."
+            },
+            {
+                pregunta: "El maestro ____ que estudiaran mucho para aprobar el examen.",
+                respuesta: "dijo",
+                distractores: ["Dice", "Decía", "Deciría"],
+                retroalimentacion: "La forma correcta es \"dijo\", ya que corresponde al pretérito perfecto simple del verbo \"decir\" en tercera persona singular."
+            },
+            {
+                pregunta: "Nosotros ____ a la fiesta el sábado pasado.",
+                respuesta: "fuimos",
+                distractores: ["Fueron", "Vamos", "Iremos"],
+                retroalimentacion: "La forma correcta es \"fuimos\", que es la conjugación en primera persona del plural del verbo \"ir\" en pretérito perfecto simple."
+            },
+            {
+                pregunta: "La casa ____ muy grande y bonita.",
+                respuesta: "es",
+                distractores: ["Era", "Está", "Fue"],
+                retroalimentacion: "La forma correcta es \"es\", ya que es la conjugación del verbo \"ser\" en presente, indicando una característica permanente de la casa."
+            },
+            {
+                pregunta: "Los niños ____ en el parque durante la tarde.",
+                respuesta: "corrían",
+                distractores: ["Corren", "Saltaban", "Corrieron"],
+                retroalimentacion: "La forma correcta es \"corrían\", que corresponde al pretérito imperfecto del verbo \"correr\" en tercera persona plural."
+            },
+            {
+                pregunta: "El libro que leímos en clase ____ muy interesante.",
+                respuesta: "fue",
+                distractores: ["Es", "Era", "Ha sido"],
+                retroalimentacion: "La forma correcta es \"fue\", porque se refiere a una acción pasada que está completamente terminada."
+            },
+            {
+                pregunta: "María y José ____ la película en el cine la semana pasada.",
+                respuesta: "vieron",
+                distractores: ["Ven", "Miraron", "Observaban"],
+                retroalimentacion: "La forma correcta es \"vieron\", que corresponde al pretérito perfecto simple del verbo \"ver\" en tercera persona plural."
+            }
+        ];
+
+        // Elementos del DOM
+        const questionDisplay = document.getElementById('questionDisplay');
+        const wordDisplay = document.getElementById('wordDisplay');
+        const keyboard = document.getElementById('keyboard');
+        const gameMessage = document.getElementById('gameMessage');
+        const pointsElement = document.getElementById('points');
+        const livesContainer = document.getElementById('livesContainer');
+        const themeToggle = document.getElementById('themeToggle');
+        const feedbackContainer = document.getElementById('feedbackContainer');
+        const toggleCaseBtn = document.getElementById('toggleCase');
+        const hintBtn = document.getElementById('hintBtn');
+        const hintContainer = document.getElementById('hintContainer');
+        const optionList = document.getElementById('optionList');
+        const gameContainer = document.getElementById('gameContainer');
+        const gameSummary = document.getElementById('gameSummary');
+        const correctAnswersElement = document.getElementById('correctAnswers');
+        const totalQuestionsElement = document.getElementById('totalQuestions');
+        const totalPointsElement = document.getElementById('totalPoints');
+        const playAgainBtn = document.getElementById('playAgainBtn');
+        const exitGameBtn = document.getElementById('exitGameBtn');
+
+
+
+        // Elementos del ahorcado
+        const hangmanParts = [
+            document.getElementById('head'),
+            document.getElementById('body'),
+            document.getElementById('leftArm'),
+            document.getElementById('rightArm'),
+            document.getElementById('leftLeg'),
+            document.getElementById('rightLeg')
+        ];
+
+        const leftEye = document.getElementById('leftEye');
+        const rightEye = document.getElementById('rightEye');
+        const mouth = document.getElementById('mouth');
+
+        // Variables del juego
+        let preguntaObj = null;
+        let letrasAdivinadas = [];
+        let intentosFallidos = 0;
+        let estadoJuego = "jugando"; // jugando, ganado, perdido
+        let puntos = 0;
+        let vidas = 5;
+        let mayusculas = false;
+        let pistaDisponible = false;
+        let preguntasUsadas = [];
+        let respuestasCorrectas = 0;
+        let preguntasRespondidas = 0;
+
+        // Iniciar el juego
+        actualizarVidas();
+        iniciarNuevoJuego();
+
+        // Evento para cambiar entre mayúsculas y minúsculas
+        toggleCaseBtn.addEventListener('click', toggleCase);
+
+        // Evento para el botón de pista
+        hintBtn.addEventListener('click', mostrarPista);
+
+        // Eventos para los botones del resumen
+        playAgainBtn.addEventListener('click', reiniciarJuego);
+        exitGameBtn.addEventListener('click', salirJuego);
+
+        // Eventos para el teclado virtual
+        keyboard.addEventListener('click', (e) => {
+            if (e.target.classList.contains('key') && !e.target.disabled && estadoJuego === "jugando" && e.target.id !== 'toggleCase') {
+                const letra = e.target.dataset.key;
+                adivinarLetra(letra);
+            }
+        });
+
+        // Evento para el teclado físico
+        document.addEventListener('keydown', (e) => {
+            if (estadoJuego === "jugando") {
+                const letra = e.key.toUpperCase();
+                if (/^[A-ZÁÉÍÓÚÜÑ]$/i.test(letra)) {
+                    adivinarLetra(letra);
+                }
+            }
+        });
+
+        // Cambio de tema (claro/oscuro)
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            const icon = themeToggle.querySelector('i');
+            if (document.body.classList.contains('dark-mode')) {
+                icon.classList.remove('bi-sun-fill');
+                icon.classList.add('bi-moon-fill');
+            } else {
+                icon.classList.remove('bi-moon-fill');
+                icon.classList.add('bi-sun-fill');
+            }
+        });
+
+        // Función para actualizar la visualización de vidas
+        function actualizarVidas() {
+            livesContainer.innerHTML = '';
+            for (let i = 0; i < 5; i++) {
+                const corazon = document.createElement('i');
+                if (i < vidas) {
+                    corazon.className = 'bi bi-heart-fill';
+                } else {
+                    corazon.className = 'bi bi-heart';
+                }
+                livesContainer.appendChild(corazon);
+            }
+        }
+
+        // Función para iniciar un nuevo juego
+        function iniciarNuevoJuego() {
+            // Animar el ahorcado
+            document.querySelectorAll('.hangman-drawing').forEach(part => {
+                part.style.animation = 'shake 0.5s ease';
+            });
+
+            // Verificar si se acabaron las vidas
+            if (vidas <= 0) {
+                mostrarResumenFinal();
+                return;
+            }
+
+            // Seleccionar una pregunta no usada
+            if (preguntasUsadas.length >= PREGUNTAS.length) {
+                // Si ya se usaron todas las preguntas, mostrar resumen final
+                mostrarResumenFinal();
+                return;
+            }
+
+            let indicePregunta;
+            do {
+                indicePregunta = Math.floor(Math.random() * PREGUNTAS.length);
+            } while (preguntasUsadas.includes(indicePregunta));
+
+            preguntasUsadas.push(indicePregunta);
+            preguntaObj = PREGUNTAS[indicePregunta];
+
+            letrasAdivinadas = [];
+            intentosFallidos = 0;
+            estadoJuego = "jugando";
+            pistaDisponible = false;
+            hintBtn.disabled = false;
+            hintBtn.style.opacity = 1;
+
+            // Mostrar la pregunta
+            questionDisplay.innerHTML = preguntaObj.pregunta.replace('____', '<strong>____</strong>');
+
+            // Reiniciar el dibujo del ahorcado
+            hangmanParts.forEach(part => {
+                part.style.display = 'none';
+            });
+
+            // Ocultar ojos y boca
+            leftEye.style.display = 'none';
+            rightEye.style.display = 'none';
+            mouth.style.display = 'none';
+            leftEye.style.opacity = 0;
+            rightEye.style.opacity = 0;
+            mouth.style.opacity = 0;
+            mouth.classList.remove('sad');
+
+            // Reiniciar el teclado
+            document.querySelectorAll('.key').forEach(key => {
+                if (key.id !== 'toggleCase') {
+                    key.classList.remove('correct', 'incorrect');
+                    key.disabled = false;
+                }
+            });
+
+            // Reiniciar el mensaje del juego
+            gameMessage.innerHTML = '';
+
+            // Ocultar retroalimentación y pista
+            feedbackContainer.style.display = 'none';
+            hintContainer.classList.remove('visible');
+            hintBtn.style.display = 'none';
+
+            // Actualizar el teclado según la respuesta correcta
+            actualizarTeclado();
+
+            // Mostrar la palabra con espacios en blanco
+            actualizarPalabraMostrada();
+
+            // Mostrar el contenedor del juego y ocultar el resumen
+            gameContainer.style.display = 'flex';
+            gameSummary.style.display = 'none';
+        }
+
+        // Función para actualizar el teclado según la respuesta correcta
+        function actualizarTeclado() {
+            // Animar el ahorcado
+
+            // Determinar si la respuesta tiene mayúsculas
+            const tieneMayusculas = /[A-ZÁÉÍÓÚÜ]/.test(preguntaObj.respuesta);
+            const tieneMinusculas = /[a-záéíóúü]/.test(preguntaObj.respuesta);
+
+            // Actualizar el estado del teclado
+            mayusculas = tieneMayusculas && !tieneMinusculas;
+
+            // Actualizar las teclas
+            document.querySelectorAll('.key:not(.special):not(.toggle)').forEach(key => {
+                const letra = key.dataset.key;
+                if (mayusculas) {
+                    key.textContent = letra.toUpperCase();
+                    key.dataset.key = letra.toUpperCase();
+                } else {
+                    key.textContent = letra.toLowerCase();
+                    key.dataset.key = letra.toLowerCase();
+                }
+            });
+
+            // Actualizar las teclas especiales
+            document.querySelectorAll('.key.special').forEach(key => {
+                const letra = key.dataset.key;
+                if (mayusculas) {
+                    key.textContent = letra.toUpperCase();
+                    key.dataset.key = letra.toUpperCase();
+                } else {
+                    key.textContent = letra.toLowerCase();
+                    key.dataset.key = letra.toLowerCase();
+                }
+            });
+        }
+
+        // Función para cambiar entre mayúsculas y minúsculas
+        function toggleCase() {
+            mayusculas = !mayusculas;
+
+            document.querySelectorAll('.key:not(.toggle)').forEach(key => {
+                const letra = key.dataset.key;
+                if (mayusculas) {
+                    key.textContent = letra.toUpperCase();
+                    key.dataset.key = letra.toUpperCase();
+                } else {
+                    key.textContent = letra.toLowerCase();
+                    key.dataset.key = letra.toLowerCase();
+                }
+            });
+        }
+
+        function mostrarPista() {
+            if (pistaDisponible && estadoJuego === "jugando") {
+                // Desactivar el botón solo para la palabra actual
+                hintBtn.disabled = true;
+                hintBtn.style.opacity = 0.5;
+
+                // Obtener las letras de la respuesta
+                const letrasRespuesta = preguntaObj.respuesta.split('');
+
+                // Identificar qué letras ya han sido adivinadas
+                const letrasNoAdivinadas = letrasRespuesta.filter(letra => {
+                    if (letra === ' ') return false; // Ignorar espacios
+
+                    // Verificar si la letra ha sido adivinada
+                    return !letrasAdivinadas.some(l =>
+                        l.toLowerCase() === letra.toLowerCase()
+                    );
+                });
+
+                // Determinar cuántas letras revelar según la longitud de la palabra
+                const letrasAdivinadasCount = letrasRespuesta.filter(letra => {
+                    if (letra === ' ') return true; // Contar espacios como adivinados
+                    return letrasAdivinadas.some(l => l.toLowerCase() === letra.toLowerCase());
+                }).length;
+
+                // MODIFICACIÓN: Si la palabra tiene 4 letras o menos, revelar solo 1 letra
+                let letrasARevelar;
+                if (letrasRespuesta.length <= 4) {
+                    letrasARevelar = 1;
+                } else {
+                    // Si hay menos de la mitad de letras adivinadas, revelar 3 letras
+                    // De lo contrario, revelar 2 letras
+                    letrasARevelar = (letrasAdivinadasCount < letrasRespuesta.length / 2) ? 2 : 1;
+                }
+
+                // Limitar al número de letras no adivinadas disponibles
+                const cantidadARevelar = Math.min(letrasARevelar, letrasNoAdivinadas.length);
+
+                // Seleccionar letras aleatorias para revelar
+                const letrasParaRevelar = [];
+                const letrasNoAdivinadasCopia = [...letrasNoAdivinadas]; // Crear copia para no modificar el original
+
+                for (let i = 0; i < cantidadARevelar; i++) {
+                    if (letrasNoAdivinadasCopia.length === 0) break;
+
+                    const indiceAleatorio = Math.floor(Math.random() * letrasNoAdivinadasCopia.length);
+                    letrasParaRevelar.push(letrasNoAdivinadasCopia[indiceAleatorio]);
+                    letrasNoAdivinadasCopia.splice(indiceAleatorio, 1);
+                }
+
+                // Añadir las letras reveladas a las letras adivinadas
+                letrasParaRevelar.forEach(letra => {
+                    if (!letrasAdivinadas.includes(letra)) {
+                        letrasAdivinadas.push(letra);
+
+                        // Marcar la tecla correspondiente como correcta en el teclado virtual
+                        const botonLetra = document.querySelector(`.key[data-key="${mayusculas ? letra.toUpperCase() : letra.toLowerCase()}"]`);
+                        if (botonLetra) {
+                            botonLetra.classList.add('correct');
+                            botonLetra.disabled = true;
+                        }
+                    }
+                });
+
+                // Actualizar la palabra mostrada con las nuevas letras reveladas
+                actualizarPalabraMostrada();
+
+                // Verificar si el jugador ganó con estas nuevas letras
+                const todasLetrasAdivinadas = preguntaObj.respuesta.split('').every(char => {
+                    if (char === ' ') return true;
+                    return letrasAdivinadas.some(l => l.toLowerCase() === char.toLowerCase());
+                });
+
+                if (todasLetrasAdivinadas) {
+                    ganarJuego();
+                }
+
+                // Mostrar información sobre la pista
+                hintContainer.innerHTML = `
+                    <strong><i class="bi bi-lightbulb-fill me-2"></i>Pista:</strong>
+                    <p>Se han revelado ${letrasParaRevelar.length} letra${letrasParaRevelar.length !== 1 ? 's' : ''} adicional${letrasParaRevelar.length !== 1 ? 'es' : ''}</p>
+                `;
+                hintContainer.classList.add('visible');
+
+                // Animar ojos parpadeando si la cabeza está visible
+                if (hangmanParts[0].style.display !== 'none') {
+                    leftEye.style.display = 'block';
+                    rightEye.style.display = 'block';
+                    leftEye.style.opacity = 1;
+                    rightEye.style.opacity = 1;
+
+                    // Animación de parpadeo
+                    leftEye.style.animation = 'blink 0.5s 3';
+                    rightEye.style.animation = 'blink 0.5s 3';
+                }
+            }
+        }
+
+        // Función para adivinar una letra
+        function adivinarLetra(letra) {
+            // Verificar si la letra ya ha sido adivinada (sin normalizar)
+            if (letrasAdivinadas.includes(letra)) return;
+
+            letrasAdivinadas.push(letra);
+
+            // Encontrar el botón correspondiente a la letra
+            const botonLetra = document.querySelector(`.key[data-key="${letra}"]`);
+            if (botonLetra) {
+                // Verificar si la letra está en la respuesta (respetando acentos)
+                const letraEnRespuesta = preguntaObj.respuesta.split('').some(char =>
+                    char.toLowerCase() === letra.toLowerCase()
+                );
+
+                if (letraEnRespuesta) {
+                    // Letra correcta
+                    botonLetra.classList.add('correct');
+                    actualizarPalabraMostrada();
+
+                    // Verificar si el jugador ganó
+                    const todasLetrasAdivinadas = preguntaObj.respuesta.split('').every(char => {
+                        if (char === ' ') return true;
+                        return letrasAdivinadas.some(l => l.toLowerCase() === char.toLowerCase());
+                    });
+
+                    if (todasLetrasAdivinadas) {
+                        ganarJuego();
+                    }
+                } else {
+                    // Letra incorrecta
+                    botonLetra.classList.add('incorrect');
+                    intentosFallidos++;
+                    actualizarAhorcado();
+
+                    // Mostrar botón de pista después de 4 fallos
+                    if (intentosFallidos === 4) {
+                        pistaDisponible = true;
+                        hintBtn.style.display = 'block';
+                    }
+
+                    // Verificar si el jugador perdió
+                    if (intentosFallidos >= hangmanParts.length) {
+                        perderJuego();
+                    }
+                }
+
+                // Deshabilitar el botón de la letra
+                botonLetra.disabled = true;
+            }
+        }
+
+        // Función para actualizar el ahorcado
+        function actualizarAhorcado() {
+            // Mostrar parte del ahorcado con animación
+            if (intentosFallidos <= hangmanParts.length) {
+                const parte = hangmanParts[intentosFallidos - 1];
+                parte.style.display = 'block';
+
+                // Si es la cabeza, mostrar ojos
+                if (intentosFallidos === 1) {
+                    setTimeout(() => {
+                        leftEye.style.display = 'block';
+                        rightEye.style.display = 'block';
+                        setTimeout(() => {
+                            leftEye.style.opacity = 1;
+                            rightEye.style.opacity = 1;
+                        }, 300);
+                    }, 500);
+                }
+            }
+        }
+
+        // Función para ganar el juego
+        function ganarJuego() {
+            estadoJuego = "ganado";
+            puntos += 10;
+            respuestasCorrectas++;
+            preguntasRespondidas++;
+            pointsElement.textContent = puntos;
+
+            // Ocultar la pista si está visible
+            hintContainer.classList.remove('visible');
+            hintBtn.style.display = 'none';
+
+            gameMessage.innerHTML = `<div class="win-message">¡Has ganado! 🎉</div>
+                                    <p>La respuesta correcta es: <strong>${preguntaObj.respuesta}</strong></p>`;
+
+            // Mostrar retroalimentación
+            feedbackContainer.textContent = preguntaObj.retroalimentacion;
+            feedbackContainer.style.display = 'block';
+
+            // Animar cara feliz
+            if (hangmanParts[0].style.display !== 'none') {
+                leftEye.style.display = 'block';
+                rightEye.style.display = 'block';
+                mouth.style.display = 'block';
+
+                setTimeout(() => {
+                    leftEye.style.opacity = 1;
+                    rightEye.style.opacity = 1;
+                    mouth.style.opacity = 1;
+                }, 100);
+            }
+
+            // Verificar si se han usado todas las preguntas
+            if (preguntasUsadas.length >= PREGUNTAS.length) {
+                setTimeout(mostrarResumenFinal, 2000);
+            } else {
+                // Botón para siguiente pregunta
+                setTimeout(() => {
+                    gameMessage.innerHTML += `<button id="nextQuestionBtn" class="btn mt-3" style="background-color: var(--correct-color); color: white;">
+                        Siguiente Pregunta
+                    </button>`;
+
+                    document.getElementById('nextQuestionBtn').addEventListener('click', iniciarNuevoJuego);
+                }, 1500);
+            }
+        }
+
+        // Función para perder el juego
+        function perderJuego() {
+            estadoJuego = "perdido";
+            vidas--;
+            preguntasRespondidas++;
+            actualizarVidas();
+
+            // Ocultar la pista si está visible
+            hintContainer.classList.remove('visible');
+            hintBtn.style.display = 'none';
+
+            gameMessage.innerHTML = `<div class="lose-message">¡Has perdido! 😢</div>
+                                    <p>La respuesta correcta era: <strong>${preguntaObj.respuesta}</strong></p>`;
+
+            // Mostrar retroalimentación
+            feedbackContainer.textContent = preguntaObj.retroalimentacion;
+            feedbackContainer.style.display = 'block';
+
+            // Animar cara triste
+            mouth.classList.add('sad');
+            mouth.style.display = 'block';
+            setTimeout(() => {
+                mouth.style.opacity = 1;
+            }, 300);
+
+            // Animar el ahorcado
+            document.querySelectorAll('.hangman-drawing').forEach(part => {
+                part.style.animation = 'shake 0.5s ease';
+            });
+
+            // Verificar si se acabaron las vidas o se han usado todas las preguntas
+            if (vidas <= 0 || preguntasUsadas.length >= PREGUNTAS.length) {
+                setTimeout(mostrarResumenFinal, 2000);
+            } else {
+                // Botón para siguiente pregunta
+                setTimeout(() => {
+                    gameMessage.innerHTML += `<button id="nextQuestionBtn" class="btn mt-3" style="background-color: var(--incorrect-color); color: white;">
+                        Siguiente Pregunta
+                    </button>`;
+
+                    document.getElementById('nextQuestionBtn').addEventListener('click', iniciarNuevoJuego);
+                }, 1500);
+            }
+        }
+
+        // Función para actualizar la palabra mostrada
+        function actualizarPalabraMostrada() {
+            wordDisplay.innerHTML = '';
+
+            preguntaObj.respuesta.split('').forEach((letra, index) => {
+                const letterBox = document.createElement('div');
+
+                if (letra === ' ') {
+                    letterBox.className = 'letter-box space';
+                } else {
+                    letterBox.className = 'letter-box';
+
+                    // Verificar si la letra ha sido adivinada (respetando acentos)
+                    const letraAdivinada = letrasAdivinadas.some(l =>
+                        l.toLowerCase() === letra.toLowerCase()
+                    );
+
+                    if (letraAdivinada) {
+                        letterBox.textContent = letra;
+                        letterBox.classList.add('revealed');
+                        // Retraso escalonado para la animación
+                        letterBox.style.animationDelay = `${index * 0.1}s`;
+                    }
+                }
+
+                wordDisplay.appendChild(letterBox);
+            });
+        }
+
+        // Función para mostrar el resumen final
+        function mostrarResumenFinal() {
+            gameContainer.style.display = 'none';
+            gameSummary.style.display = 'block';
+
+            correctAnswersElement.textContent = respuestasCorrectas;
+            totalQuestionsElement.textContent = preguntasRespondidas;
+            totalPointsElement.textContent = puntos;
+        }
+
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const backgroundMusic = document.getElementById("backgroundMusic");
+            const muteToggle = document.getElementById("muteToggle");
+            const playAgainBtn = document.getElementById("playAgainBtn");
+
+            let isMuted = false;
+            let musicInitialized = false;
+
+            function playAudio() {
+                if (!musicInitialized) {
+                    backgroundMusic.volume = 0.5;
+                    backgroundMusic.muted = isMuted;
+
+                    backgroundMusic.play().then(() => {
+                        console.log("🎵 Música iniciada correctamente.");
+                        musicInitialized = true;
+                    }).catch(error => {
+                        console.log("❌ Autoplay bloqueado. Esperando interacción...");
+                        waitForUserInteraction();
+                    });
+                }
+            }
+
+            function waitForUserInteraction() {
+                function enableMusic() {
+                    playAudio();
+                    document.removeEventListener("click", enableMusic);
+                    document.removeEventListener("keydown", enableMusic);
+                }
+                document.addEventListener("click", enableMusic);
+                document.addEventListener("keydown", enableMusic);
+            }
+
+            // ⚡ Intentar reproducir inmediatamente
+            playAudio();
+
+            // 🔇 MUTE / UNMUTE
+            muteToggle?.addEventListener("click", () => {
+                isMuted = !isMuted;
+                backgroundMusic.muted = isMuted;
+
+                const icon = muteToggle.querySelector("i");
+                if (icon) {
+                    icon.classList.toggle("bi-volume-up-fill", !isMuted);
+                    icon.classList.toggle("bi-volume-mute-fill", isMuted);
+                }
+            });
+
+            // 🔄 REINICIAR MÚSICA DESPUÉS DEL JUEGO
+            playAgainBtn?.addEventListener("click", () => {
+                reiniciarJuego();
+                if (!isMuted) {
+                    backgroundMusic.play();
+                }
+            });
+        });
+
+
+        // Función para reiniciar el juego
+        function reiniciarJuego() {
+            puntos = 0;
+            vidas = 5;
+            preguntasUsadas = [];
+            respuestasCorrectas = 0;
+            preguntasRespondidas = 0;
+
+            pointsElement.textContent = puntos;
+            actualizarVidas();
+
+            iniciarNuevoJuego();
+        }
+
+        // Función para salir del juego
+        function salirJuego() {
+            // Mostrar mensaje de despedida
+            gameSummary.innerHTML = `
+                <h2 class="summary-title">¡Gracias por jugar!</h2>
+                <p>Esperamos que hayas disfrutado del juego y aprendido algo nuevo.</p>
+                <div class="summary-buttons">
+                    <button id="restartGameBtn" class="summary-button play-again">Volver a jugar</button>
+                </div>
+            `;
+
+            document.getElementById('restartGameBtn').addEventListener('click', reiniciarJuego);
+        }
+    </script>
+
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>
