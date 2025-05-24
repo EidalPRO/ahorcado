@@ -1021,7 +1021,7 @@
 
                 // Identificar qué letras ya han sido adivinadas
                 const letrasNoAdivinadas = letrasRespuesta.filter(letra => {
-                    if (letra === ' ') return false; // Ignorar espacios
+                    if (letra === ' ') return false; 
 
                     // Verificar si la letra ha sido adivinada
                     return !letrasAdivinadas.some(l =>
@@ -1035,7 +1035,7 @@
                     return letrasAdivinadas.some(l => l.toLowerCase() === letra.toLowerCase());
                 }).length;
 
-                // MODIFICACIÓN: Si la palabra tiene 4 letras o menos, revelar solo 1 letra
+                // Si la palabra tiene 4 letras o menos, revelar solo 1 letra
                 let letrasARevelar;
                 if (letrasRespuesta.length <= 4) {
                     letrasARevelar = 1;
@@ -1050,7 +1050,7 @@
 
                 // Seleccionar letras aleatorias para revelar
                 const letrasParaRevelar = [];
-                const letrasNoAdivinadasCopia = [...letrasNoAdivinadas]; // Crear copia para no modificar el original
+                const letrasNoAdivinadasCopia = [...letrasNoAdivinadas]; 
 
                 for (let i = 0; i < cantidadARevelar; i++) {
                     if (letrasNoAdivinadasCopia.length === 0) break;
@@ -1110,7 +1110,7 @@
 
         // Función para adivinar una letra
         function adivinarLetra(letra) {
-            // Verificar si la letra ya ha sido adivinada (sin normalizar)
+            // Verificar si la letra ya ha sido adivinada 
             if (letrasAdivinadas.includes(letra)) return;
 
             letrasAdivinadas.push(letra);
@@ -1118,7 +1118,7 @@
             // Encontrar el botón correspondiente a la letra
             const botonLetra = document.querySelector(`.key[data-key="${letra}"]`);
             if (botonLetra) {
-                // Verificar si la letra está en la respuesta (respetando acentos)
+                // Verificar si la letra está en la respuesta 
                 const letraEnRespuesta = preguntaObj.respuesta.split('').some(char =>
                     char.toLowerCase() === letra.toLowerCase()
                 );
@@ -1155,7 +1155,7 @@
                     }
                 }
 
-                // Deshabilitar el botón de la letra
+           
                 botonLetra.disabled = true;
             }
         }
@@ -1217,7 +1217,6 @@
             if (preguntasUsadas.length >= PREGUNTAS.length) {
                 setTimeout(mostrarResumenFinal, 2000);
             } else {
-                // Botón para siguiente pregunta
                 setTimeout(() => {
                     gameMessage.innerHTML += `<button id="nextQuestionBtn" class="btn mt-3" style="background-color: var(--correct-color); color: white;">
                         Siguiente Pregunta
@@ -1262,7 +1261,6 @@
             if (vidas <= 0 || preguntasUsadas.length >= PREGUNTAS.length) {
                 setTimeout(mostrarResumenFinal, 2000);
             } else {
-                // Botón para siguiente pregunta
                 setTimeout(() => {
                     gameMessage.innerHTML += `<button id="nextQuestionBtn" class="btn mt-3" style="background-color: var(--incorrect-color); color: white;">
                         Siguiente Pregunta
@@ -1285,7 +1283,7 @@
                 } else {
                     letterBox.className = 'letter-box';
 
-                    // Verificar si la letra ha sido adivinada (respetando acentos)
+                    // Verificar si la letra ha sido adivinada 
                     const letraAdivinada = letrasAdivinadas.some(l =>
                         l.toLowerCase() === letra.toLowerCase()
                     );
@@ -1293,7 +1291,6 @@
                     if (letraAdivinada) {
                         letterBox.textContent = letra;
                         letterBox.classList.add('revealed');
-                        // Retraso escalonado para la animación
                         letterBox.style.animationDelay = `${index * 0.1}s`;
                     }
                 }
@@ -1330,7 +1327,7 @@
                         console.log("🎵 Música iniciada correctamente.");
                         musicInitialized = true;
                     }).catch(error => {
-                        console.log("❌ Autoplay bloqueado. Esperando interacción...");
+                        console.log(" Autoplay bloqueado. Esperando interacción...");
                         waitForUserInteraction();
                     });
                 }
@@ -1346,10 +1343,10 @@
                 document.addEventListener("keydown", enableMusic);
             }
 
-            // ⚡ Intentar reproducir inmediatamente
+            //  Intentar reproducir inmediatamente
             playAudio();
 
-            // 🔇 MUTE / UNMUTE
+            //  MUTE / UNMUTE
             muteToggle?.addEventListener("click", () => {
                 isMuted = !isMuted;
                 backgroundMusic.muted = isMuted;
@@ -1361,7 +1358,7 @@
                 }
             });
 
-            // 🔄 REINICIAR MÚSICA DESPUÉS DEL JUEGO
+            // REINICIAR MÚSICA DESPUÉS DEL JUEGO
             playAgainBtn?.addEventListener("click", () => {
                 reiniciarJuego();
                 if (!isMuted) {
@@ -1387,7 +1384,6 @@
 
         // Función para salir del juego
         function salirJuego() {
-            // Mostrar mensaje de despedida
             gameSummary.innerHTML = `
                 <h2 class="summary-title">¡Gracias por jugar!</h2>
                 <p>Esperamos que hayas disfrutado del juego y aprendido algo nuevo.</p>
